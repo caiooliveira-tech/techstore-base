@@ -17,6 +17,7 @@ export default function App() {
   const [carrinho, setCarrinho] = useState([])
   const [clientes, setClientes] = useState([])
   const [clienteAtualId, setClienteAtualId] = useState(null)
+  const [listaEspera, setListaEspera] = useState([])
 
   useEffect(() => {
     buscarProdutos()
@@ -31,14 +32,16 @@ export default function App() {
   }, [])
 
   function adicionarAoCarrinho(produto) {
-    setCarrinho(carrinho.concat(produto))
+    if (!produto) return
+
+    setCarrinho((anterior) => anterior.concat(produto))
   }
 
   function removerUmaUnidade(produtoId) {
     // Remove só a primeira unidade encontrada do produto
     let removido = false
-    setCarrinho(
-      carrinho.filter((produto) => {
+    setCarrinho((anterior) =>
+      anterior.filter((produto) => {
         if (!removido && produto.id === produtoId) {
           removido = true
           return false
@@ -46,6 +49,18 @@ export default function App() {
         return true
       })
     )
+  }
+
+  function registrarAviso(produtoId, cliente) {
+    setListaEspera((anterior) => [
+      ...anterior,
+      {
+        id: `${produtoId}-${Date.now()}-${Math.random()}`,
+        produtoId,
+        nome: cliente.nome,
+        email: cliente.email,
+      },
+    ])
   }
 
   const clienteAtual = clientes.find((cliente) => cliente.id === clienteAtualId)
@@ -67,7 +82,13 @@ export default function App() {
             />
             <Route
               path="/produto/:id"
-              element={<PaginaProduto produtos={produtos} onAdicionar={adicionarAoCarrinho} />}
+              element={
+                <PaginaProduto
+                  produtos={produtos}
+                  onAdicionar={adicionarAoCarrinho}
+                  onRegistrarAviso={registrarAviso}
+                />
+              }
             />
             <Route
               path="/carrinho"
@@ -81,7 +102,7 @@ export default function App() {
                 />
               }
             />
-            <Route path="/estoque" element={<Estoque produtos={produtos} />} />
+            <Route path="/estoque" element={<Estoque produtos={produtos} listaEspera={listaEspera} />} />
           </Routes>
         )}
       </main>
